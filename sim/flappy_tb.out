@@ -1,0 +1,2 @@
+PASS: flappy_game_core basic behavior validated
+tb/flappy_game_core_tb.v:145: $finish called at 24215000 (1ps)
