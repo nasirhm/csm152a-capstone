@@ -20,6 +20,7 @@ module flappy_game_core_tb;
     reg [9:0] y_before;
     reg saw_score;
     reg saw_gameover;
+    reg [7:0] max_score;
 
     flappy_game_core #(
         .SCREEN_W(160),
@@ -96,10 +97,13 @@ module flappy_game_core_tb;
         end
 
         saw_score = 1'b0;
-        for (i = 0; i < 450; i = i + 1) begin
+        max_score = 8'd0;
+        for (i = 0; i < 1200; i = i + 1) begin
+            // Crude autopilot: flap toward the vertical middle. On game over,
+            // tap to restart so the bird keeps attempting and accumulates laps.
             if (game_state == 2'd2) begin
-                jump_btn = 1'b0;
-            end else if (bird_y > 10'd140) begin
+                jump_btn = (i[2:0] == 3'd0);
+            end else if (bird_y > 10'd110) begin
                 jump_btn = 1'b1;
             end else begin
                 jump_btn = 1'b0;
@@ -110,12 +114,24 @@ module flappy_game_core_tb;
             if (score > 0) begin
                 saw_score = 1'b1;
             end
+            if (score > max_score) begin
+                max_score = score;
+            end
         end
 
         if (!saw_score) begin
             $display("FAIL: score never incremented");
             $fatal;
         end
+
+        // Regression guard: the old unsigned recycle test never re-armed the
+        // pipes, so the score was permanently stuck at 2. Require it to exceed
+        // the pipe count to prove pipes recycle and keep scoring.
+        if (max_score <= 8'd2) begin
+            $display("FAIL: score capped at %0d (pipes not recycling)", max_score);
+            $fatal;
+        end
+        $display("INFO: max score reached = %0d", max_score);
 
         saw_gameover = 1'b0;
         jump_btn = 1'b0;

@@ -48,6 +48,8 @@ module flappy_game_core #(
     integer next_y;
     integer p0_next_x;
     integer p1_next_x;
+    integer p0_spawn;
+    integer p1_spawn;
     integer new_gap;
     reg     collision;
 
@@ -120,18 +122,25 @@ module flappy_game_core #(
                         score <= score + 8'd1;
                     end
 
-                    if ((pipe0_x + PIPE_W) <= 0) begin
-                        pipe0_x      <= pipe1_x + PIPE_SPACING;
+                    // p0_next_x is signed (integer), so it goes negative once the
+                    // pipe scrolls off the left edge. Recycle the pipe there and
+                    // re-arm pipe0_passed so it can score again on the next lap.
+                    if (p0_next_x <= 0) begin
+                        p0_spawn     = pipe1_x + PIPE_SPACING;
+                        if (p0_spawn < SCREEN_W) p0_spawn = SCREEN_W; // enter from the right edge, no on-screen pop
                         new_gap      = MIN_GAP_Y + (lfsr[7:0] % (MAX_GAP_Y - MIN_GAP_Y + 1));
+                        pipe0_x      <= p0_spawn[9:0];
                         pipe0_gap_y  <= new_gap[8:0];
                         pipe0_passed <= 1'b0;
                     end else begin
                         pipe0_x <= p0_next_x[9:0];
                     end
 
-                    if ((pipe1_x + PIPE_W) <= 0) begin
-                        pipe1_x      <= pipe0_x + PIPE_SPACING;
+                    if (p1_next_x <= 0) begin
+                        p1_spawn     = pipe0_x + PIPE_SPACING;
+                        if (p1_spawn < SCREEN_W) p1_spawn = SCREEN_W;
                         new_gap      = MIN_GAP_Y + (lfsr[15:8] % (MAX_GAP_Y - MIN_GAP_Y + 1));
+                        pipe1_x      <= p1_spawn[9:0];
                         pipe1_gap_y  <= new_gap[8:0];
                         pipe1_passed <= 1'b0;
                     end else begin

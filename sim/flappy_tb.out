@@ -1,2 +1,3 @@
+INFO: max score reached = 27
 PASS: flappy_game_core basic behavior validated
-tb/flappy_game_core_tb.v:145: $finish called at 24215000 (1ps)
+tb/flappy_game_core_tb.v:161: $finish called at 46715000 (1ps)
