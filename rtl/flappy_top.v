@@ -1,6 +1,10 @@
 `timescale 1ns/1ps
 
-module flappy_top (
+module flappy_top #(
+    // Game advances once every GAME_SLOWDOWN video frames. 1 = full speed
+    // (~60 Hz), 2 = half speed, 3 = a third, etc. Raise this to slow the game.
+    parameter GAME_SLOWDOWN = 2
+) (
     input  wire       clk,
     input  wire       btn_reset,
     input  wire       btn_jump,
@@ -36,6 +40,9 @@ module flappy_top (
     wire video_on;
     wire frame_tick;
 
+    reg  [3:0] frame_div;
+    wire       game_tick;
+
     wire [9:0] bird_x;
     wire [9:0] bird_y;
     wire [9:0] pipe0_x;
@@ -67,6 +74,22 @@ module flappy_top (
 
     assign jump_pulse = jump_sync & ~jump_prev;
 
+    // Frame divider: derive the game update pulse from frame_tick so the whole
+    // game (physics, pipes, jump timing) runs at 1/GAME_SLOWDOWN of frame rate.
+    always @(posedge clk) begin
+        if (btn_reset) begin
+            frame_div <= 4'd0;
+        end else if (frame_tick) begin
+            if (frame_div == GAME_SLOWDOWN - 1) begin
+                frame_div <= 4'd0;
+            end else begin
+                frame_div <= frame_div + 4'd1;
+            end
+        end
+    end
+
+    assign game_tick = frame_tick && (frame_div == 4'd0);
+
     always @(posedge clk) begin
         if (btn_reset) begin
             jump_latched <= 1'b0;
@@ -74,13 +97,13 @@ module flappy_top (
             if (jump_pulse) begin
                 jump_latched <= 1'b1;
             end
-            if (frame_tick && jump_latched) begin
+            if (game_tick && jump_latched) begin
                 jump_latched <= 1'b0;
             end
         end
     end
 
-    assign jump_cmd = frame_tick && jump_latched;
+    assign jump_cmd = game_tick && jump_latched;
 
     vga_timing u_vga_timing (
         .clk(clk),
@@ -97,7 +120,7 @@ module flappy_top (
     flappy_game_core u_game_core (
         .clk(clk),
         .rst(btn_reset),
-        .frame_tick(frame_tick),
+        .frame_tick(game_tick),
         .jump_btn(jump_cmd),
         .game_state(game_state),
         .score(score),
