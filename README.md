@@ -43,9 +43,9 @@ make lint
 
 1. Add all files from `rtl/` as design sources.
 2. Optionally add `tb/flappy_game_core_tb.v` as simulation source.
-3. For Basys 3, add `constraints/basys3_flappy.xdc` as a constraints source.
+3. For Basys 3, add `constraints/Basys-3-Master.xdc` as a constraints source.
 4. Basys 3 mapping in this project:
    - `btn_reset` = `BTN_C`
    - `btn_jump` = `BTN_U`
    - `led[2:0]` = `LED0..LED2`
-   - `vga_*`, `seg`, `an`, `dp` use the standard Digilent Basys 3 pins
+   - `vga_*` use the onboard 12-bit VGA connector; `seg`, `an`, `dp` use the standard Digilent Basys 3 pins
